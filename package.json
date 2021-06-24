@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "@types/node": "^15.12.4",
+    "@types/uuid": "^8.3.0"
+  },
+  "dependencies": {
+    "dotenv": "^10.0.0",
+    "uuid": "^8.3.2"
+  }
+}
