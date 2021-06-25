@@ -9,7 +9,7 @@ type UdpServerCallbacks = {
 
 type Message = {
     messageUuid: string,
-    type: 'ping' | 'myrinfo',
+    type: 'ping' | 'myrinfo' | 'registerRinfo' | 'findRinfo',
     body: any
 }
 
@@ -22,11 +22,11 @@ export class UdpServer {
         this.port = port
         this.host = host
     }
-    bind = (callbacks: UdpServerCallbacks) => new Promise<Return>((resolve) => {
+    bind = (callbacks: UdpServerCallbacks) => new Promise<Return<null>>((resolve) => {
         this.socket.bind(
             this.port, this.host,
             () => {
-                resolve([null, null])
+                resolve(new Return<null>(null, null))
             }
         )
         this.socket.on("error", (err) => {
@@ -41,14 +41,15 @@ export class UdpServer {
                 )
             })
     })
-    respond = (rinfo: RemoteInfo, message: Message) => new Promise<Return>((resolve) => {
+    respond = (rinfo: RemoteInfo, message: Message) => new Promise<Return<number>>((resolve) => {
         this.socket.send(
             serialize(message),
             rinfo.port,
             rinfo.address,
             (error, bytes) => {
-                if (error) return resolve([error, null])
-                return resolve([null, bytes])
+                if (error)
+                    return resolve(new Return(error, null))
+                return resolve(new Return(null, bytes))
             }
         )
     })

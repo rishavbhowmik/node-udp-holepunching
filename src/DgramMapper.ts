@@ -18,19 +18,14 @@ export class DgramMapper {
 
     /**
      * @param info Dgram info of new client
-     * @returns Return tupple with {clientId, clientIdHash} in playload
      */
     public registerClient(info: ClientInfo) {
         const clientId = uuid() as ClientUuid
         const clientIdHash = hashBuilder(clientId)
         this.clientDgramMap.set(clientId, info)
-        return [
-            null,
-            {
-                clientId,
-                clientIdHash
-            }
-        ] as Return
+        return new Return<{ clientId: string, clientIdHash: string }>(
+            null, { clientId, clientIdHash }
+        )
     }
 
     /**
@@ -46,7 +41,7 @@ export class DgramMapper {
             return [error, null]
         }
         this.clientDgramMap.set(clientId, info)
-        return [null, null] as Return
+        return new Return<null>(null, null)
     }
 
     /**
@@ -56,11 +51,11 @@ export class DgramMapper {
     public removeClient(clientId: ClientUuid) {
         const deleted = this.clientDgramMap.delete(clientId)
         if (deleted)
-            return [null, null] as Return
+            return new Return<null>(null, null)
         const error = {
             code: 404, message: "Client not found"
         }
-        return [error, null] as Return
+        return new Return<null>(error, null)
     }
 
     /**
@@ -70,14 +65,10 @@ export class DgramMapper {
     public getClientInfo(clientId: ClientUuid) {
         const clientInfo = this.clientDgramMap.get(clientId)
 
-        if (clientInfo) return [
-            null, clientInfo
-        ] as Return
+        if (clientInfo) return new Return<ClientInfo>(null, clientInfo)
 
         const error = { code: 404, Error: "ClientId not found" }
-        return [
-            error, null
-        ]
+        return new Return<ClientInfo>(error, null)
     }
 
 }
