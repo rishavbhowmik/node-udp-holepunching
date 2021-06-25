@@ -3,13 +3,13 @@ type ReturnTupple<T> = [CustomError, T]
 
 export class Return<T> {
     error: CustomError
-    payload: T
-    constructor(error, payload) {
+    payload: T | null
+    constructor(error: CustomError, payload: T | null) {
         this.error = error
         this.payload = payload
     }
     getAsTupple = () => [
         this.error as CustomError,
-        this.payload as T
-    ] as ReturnTupple<T>
+        this.payload as T | null
+    ] as ReturnTupple<T | null>
 }

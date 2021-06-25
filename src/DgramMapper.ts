@@ -67,7 +67,7 @@ export class DgramMapper {
 
         if (clientInfo) return new Return<ClientInfo>(null, clientInfo)
 
-        const error = { code: 404, Error: "ClientId not found" }
+        const error = { code: 404, message: "ClientId not found" }
         return new Return<ClientInfo>(error, null)
     }
 

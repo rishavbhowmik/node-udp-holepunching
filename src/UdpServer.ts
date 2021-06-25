@@ -1,5 +1,6 @@
 import { createSocket, RemoteInfo, Socket } from "dgram"
 import { deserialize, serialize } from "v8"
+import { ClientInfo } from "./DgramMapper"
 import { Return } from "./util/Return"
 
 type UdpServerCallbacks = {
@@ -7,9 +8,9 @@ type UdpServerCallbacks = {
     onMessage?: (msg: Message, rinfo: RemoteInfo) => void
 }
 
-type Message = {
+export type Message = {
     messageUuid: string,
-    type: 'ping' | 'myrinfo' | 'registerRinfo' | 'findRinfo',
+    type: 'ping' | 'myrinfo' | 'registerRinfo' | 'findRinfo' | 'dm',
     body: any
 }
 
@@ -21,6 +22,9 @@ export class UdpServer {
         this.socket = createSocket("udp4")
         this.port = port
         this.host = host
+    }
+    connect = () => {
+        this.socket.connect(this.port, this.host)
     }
     bind = (callbacks: UdpServerCallbacks) => new Promise<Return<null>>((resolve) => {
         this.socket.bind(
@@ -34,22 +38,22 @@ export class UdpServer {
             if (typeof callbacks.onError === 'function')
                 callbacks.onError(err)
         })
-        if (typeof callbacks.onMessage === 'function')
-            this.socket.on("message", (msg, rinfo) => {
+        this.socket.on("message", (msg, rinfo) => {
+            if (typeof callbacks.onMessage === 'function')
                 callbacks.onMessage(
                     deserialize(msg) as Message, rinfo
                 )
-            })
+        })
     })
-    respond = (rinfo: RemoteInfo, message: Message) => new Promise<Return<number>>((resolve) => {
+    respond = (rinfo: ClientInfo, message: Message) => new Promise<Return<number>>((resolve) => {
         this.socket.send(
             serialize(message),
             rinfo.port,
             rinfo.address,
             (error, bytes) => {
                 if (error)
-                    return resolve(new Return(error, null))
-                return resolve(new Return(null, bytes))
+                    return resolve(new Return<number>(error, null))
+                return resolve(new Return<number>(null, bytes))
             }
         )
     })
