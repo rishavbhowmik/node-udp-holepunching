@@ -18,7 +18,7 @@ export const hashBuilder = (data: string | Buffer) => {
     hash.update(data)
     HASH_KEYS.forEach(key => {
         hash.update(
-            hash.digest().toString('base64') + key
+            hash.copy().digest().toString('base64') + key
         )
     })
     return hash.digest().toString('base64')

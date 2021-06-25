@@ -1,6 +1,6 @@
 import { Message, UdpServer } from "./udpServer"
 import { DgramMapper } from "./DgramMapper"
-import { RemoteInfo } from "dgram"
+import type { RemoteInfo } from "dgram"
 require('dotenv').config()
 
 // const UDP_HOST = process.env.UDP_HOST
@@ -10,7 +10,6 @@ export default async (port: number, host: string) => {
     const udpServer = new UdpServer(port, host)
     const dgramMap = new DgramMapper()
     const onMessage = async (message: Message, rinfo: RemoteInfo) => {
-
         const { type, messageUuid } = message
 
         switch (type) {
@@ -51,6 +50,8 @@ export default async (port: number, host: string) => {
                 const [error, clientInfo] = dgramMap
                     .getClientInfo(message.body.clientId)
                     .getAsTupple()
+                console.log(error, clientInfo);
+                
                 if (error || !clientInfo) break
                 await udpServer.respond(
                     clientInfo,

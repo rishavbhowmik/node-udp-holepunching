@@ -1,6 +1,6 @@
 import { createSocket, RemoteInfo, Socket } from "dgram"
 import { deserialize, serialize } from "v8"
-import { ClientInfo } from "./DgramMapper"
+import type { ClientInfo } from "./DgramMapper"
 import { Return } from "./util/Return"
 
 type UdpServerCallbacks = {
@@ -23,38 +23,60 @@ export class UdpServer {
         this.port = port
         this.host = host
     }
-    connect = () => {
-        this.socket.connect(this.port, this.host)
-    }
-    bind = (callbacks: UdpServerCallbacks) => new Promise<Return<null>>((resolve) => {
-        this.socket.bind(
-            this.port, this.host,
-            () => {
+    bind(callbacks: UdpServerCallbacks) {
+        const self = this
+        return new Promise<Return<null>>((resolve) => {
+            self.socket.on("error", (err) => {
+                self.socket.disconnect()
+                if (typeof callbacks.onError === 'function')
+                    callbacks.onError(err)
+            })
+            self.socket.on("message", (msg, rinfo) => {
+                if (typeof callbacks.onMessage === 'function')
+                    callbacks.onMessage(
+                        deserialize(msg) as Message, rinfo
+                    )
+            })
+            self.socket.on('listening', () => {
                 resolve(new Return<null>(null, null))
-            }
-        )
+            })
+            self.socket.bind(self.port, self.host)
+        })
+    }
+    respond = (rinfo: ClientInfo, message: Message) => {
+        const self = this
+        return new Promise<Return<number>>((resolve) => {
+            self.socket.send(
+                serialize(message),
+                rinfo.port,
+                rinfo.address,
+                (error, bytes) => {
+                    if (error)
+                        return resolve(new Return<number>(error, null))
+                    return resolve(new Return<number>(null, bytes))
+                }
+            )
+        })
+    }
+}
+
+export class UdpClient {
+    socket: Socket
+    constructor(onMessage: (message: Message) => any) {
+        this.socket = createSocket("udp4")
+        this.socket.on("message", (msg) => {
+            const message: Message = deserialize(msg)
+            onMessage(message)
+        })
         this.socket.on("error", (err) => {
-            this.socket.disconnect()
-            if (typeof callbacks.onError === 'function')
-                callbacks.onError(err)
+            console.log({ err });
         })
-        this.socket.on("message", (msg, rinfo) => {
-            if (typeof callbacks.onMessage === 'function')
-                callbacks.onMessage(
-                    deserialize(msg) as Message, rinfo
-                )
-        })
-    })
-    respond = (rinfo: ClientInfo, message: Message) => new Promise<Return<number>>((resolve) => {
+    }
+    send(rinfo: ClientInfo, message: Message) {
         this.socket.send(
             serialize(message),
             rinfo.port,
-            rinfo.address,
-            (error, bytes) => {
-                if (error)
-                    return resolve(new Return<number>(error, null))
-                return resolve(new Return<number>(null, bytes))
-            }
+            rinfo.address
         )
-    })
+    }
 }
