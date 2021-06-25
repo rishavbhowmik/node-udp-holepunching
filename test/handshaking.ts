@@ -132,6 +132,109 @@ const test = async () => {
             })
         })
     }
+
+    //hole punching
+    {
+        console.log("HOLE PUNCHING");
+        console.log("Alice and bob get each other's route info");
+
+        var aliceGetsBob: ClientInfo | null = null
+        setTimeout(() => {
+            alice.send(serverInfo, {
+                messageUuid: uuid(),
+                type: 'findRinfo',
+                body: {
+                    clientId: bobClientId
+                }
+            })
+        }, 1000)
+        await new Promise((resolve) => {
+            aliceCb.push((message: Message) => {
+                aliceGetsBob = message.body
+                console.log(
+                    { aliceGetsBob }
+                );
+                resolve(true)
+            })
+        })
+        var bobGetsAlice: ClientInfo | null = null
+        setTimeout(() => {
+            bob.send(serverInfo, {
+                messageUuid: uuid(),
+                type: 'findRinfo',
+                body: {
+                    clientId: aliceClientId
+                }
+            })
+        }, 1000)
+        await new Promise((resolve) => {
+            bobCb.push((message: Message) => {
+                bobGetsAlice = message.body
+                console.log(
+                    { bobGetsAlice }
+                );
+                resolve(true)
+            })
+        })
+        await new Promise((resolve) => {
+            bobCb.push((message: Message) => {
+                bobGetsAlice = message.body
+                console.log(
+                    { bobGetsAlice }
+                );
+                resolve(true)
+            })
+        })
+
+        console.log("Real P2P");
+        setTimeout(() => {
+            if (aliceGetsBob)
+                alice.send(aliceGetsBob, {
+                    messageUuid: uuid(),
+                    type: 'findRinfo',
+                    body: {
+                        code: "Hi Bobby - Alice"
+                    }
+                })
+        }, 1000)
+
+        await Promise.all([
+            new Promise((resolve) => {
+                aliceCb.push((message: Message) => {
+                    resolve(true)
+                })
+            }),
+            await new Promise((resolve) => {
+                bobCb.push((message: Message) => {
+                    resolve(true)
+                })
+            })
+        ])
+        setTimeout(() => {
+            console.log(2 ** 8, { bobGetsAlice });
+
+            if (bobGetsAlice)
+                bob.send(bobGetsAlice, {
+                    messageUuid: uuid(),
+                    type: 'findRinfo',
+                    body: {
+                        code: "Oh Hi, Aleeeeee! - Bob"
+                    }
+                })
+        }, 1000)
+        await Promise.all([
+            new Promise((resolve) => {
+                bobCb.push((message: Message) => {
+                    resolve(true)
+                })
+            }),
+            await new Promise((resolve) => {
+                aliceCb.push((message: Message) => {
+                    resolve(true)
+                })
+            })
+        ])
+    }
 }
 
 test()

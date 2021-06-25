@@ -40,6 +40,8 @@ export default async (port: number, host: string) => {
                     .getClientInfo(message.body.clientId)
                     .getAsTupple()
                 if (error) break
+                console.log(message.body.clientId, {clientInfo});
+                
                 await udpServer.respond(
                     rinfo,
                     { type, messageUuid, body: clientInfo }
@@ -50,8 +52,6 @@ export default async (port: number, host: string) => {
                 const [error, clientInfo] = dgramMap
                     .getClientInfo(message.body.clientId)
                     .getAsTupple()
-                console.log(error, clientInfo);
-                
                 if (error || !clientInfo) break
                 await udpServer.respond(
                     clientInfo,
